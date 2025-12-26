@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>健康风险手表界面模拟</title>
+    <style>
+        /* 1. 全局和字体设置 */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+        }
+
+        /* 2. 手表外壳 */
+        .watch-container {
+            width: 300px;
+            height: 368px;
+            background-color: #000000;
+            border-radius: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5),
+                        inset 0 0 10px rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        /* 3. 屏幕主体 */
+        .screen {
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 8px 12px 8px;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        /* 4. 顶部状态栏 */
+        .status-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+        }
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .signal {
+            font-size: 10px;
+        }
+        .battery {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .battery-icon {
+            width: 18px;
+            height: 9px;
+            border-radius: 2px;
+            border: 1px solid #fff;
+            position: relative;
+        }
+        .battery-icon::after {
+            content: "";
+            position: absolute;
+            right: -3px;
+            top: 2px;
+            width: 2px;
+            height: 5px;
+            border-radius: 1px;
+            background-color: #fff;
+        }
+        .battery-level {
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            bottom: 1px;
+            border-radius: 1px;
+            background: #4cd964;
+            width: 70%;
+        }
+
+        /* 5. 时间与日期 */
+        .time-block {
+            text-align: center;
+            margin-top: 4px;
+            margin-bottom: 4px;
+        }
+        .time-display {
+            font-size: 42px;
+            font-weight: 200;
+            line-height: 1;
+        }
+        .date-display {
+            font-size: 13px;
+            color: #ccc;
+            margin-top: 2px;
+        }
+
+        /* 6. 风险标签 + route */
+        .risk-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 2px 0 4px 0;
+        }
+        .risk-chip {
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .risk-high {
+            background: linear-gradient(135deg, #ff3b30, #ff2d55);
+        }
+        .risk-medium {
+            background: linear-gradient(135deg, #ff9500, #ffcc00);
+        }
+        .risk-low {
+            background: linear-gradient(135deg, #34c759, #30d158);
+        }
+        .route-tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.25);
+            opacity: 0.85;
+        }
+
+        /* 7. 关键指标区（心率/步数/睡眠） */
+        .metrics-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .metric-card {
+            flex: 1;
+            border-radius: 12px;
+            padding: 6px 5px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 11px;
+        }
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+        .metric-icon {
+            font-size: 14px;
+        }
+        .metric-label {
+            font-size: 10px;
+            opacity: 0.75;
+        }
+        .metric-value {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .metric-sub {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        .metric-hr {
+            background: radial-gradient(circle at top left, #ff5e57 0, #7b1a1a 60%);
+        }
+        .metric-steps {
+            background: radial-gradient(circle at top left, #32d74b 0, #004b2b 65%);
+        }
+        .metric-sleep {
+            background: radial-gradient(circle at top left, #5e5ce6 0, #14142a 65%);
+        }
+
+        /* 8. 天气卡片 */
+        .weather-card {
+            width: 100%;
+            border-radius: 14px;
+            padding: 6px 7px;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #0a84ff, #1c1c1e);
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+        }
+        .weather-main {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .weather-icon {
+            font-size: 18px;
+        }
+        .weather-temp {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .weather-sub {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+        .weather-warning {
+            font-size: 10px;
+            color: #ffd60a;
+            text-align: right;
+            max-width: 110px;
+        }
+
+        /* 9. 文本消息 */
+        .message-card {
+            width: 100%;
+            border-radius: 12px;
+            padding: 6px 7px;
+            box-sizing: border-box;
+            background: #1c1c1e;
+            font-size: 11px;
+            line-height: 1.4;
+            max-height: 70px;
+            overflow: hidden;
+            white-space: pre-wrap;
+        }
+
+        /* 10. 提醒列表 */
+        .reminders-card {
+            width: 100%;
+            border-radius: 12px;
+            padding: 5px 7px;
+            box-sizing: border-box;
+            background: #1c1c1e;
+            font-size: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            max-height: 85px;
+            overflow-y: auto;
+        }
+        .reminders-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+        .reminders-title {
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .reminders-count {
+            font-size: 10px;
+            opacity: 0.7;
+        }
+        .reminder-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 4px;
+            padding: 2px 0;
+        }
+        .reminder-icon {
+            font-size: 11px;
+            margin-top: 1px;
+        }
+        .reminder-content {
+            flex: 1;
+        }
+        .reminder-text {
+            font-size: 10px;
+        }
+        .reminder-meta {
+            font-size: 9px;
+            opacity: 0.7;
+        }
+        .severity-high {
+            color: #ff453a;
+        }
+        .severity-medium {
+            color: #ff9f0a;
+        }
+        .severity-low {
+            color: #30d158;
+        }
+        .reminders-empty {
+            font-size: 10px;
+            opacity: 0.7;
+            font-style: italic;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="watch-container">
+    <div class="screen">
+        <!-- 顶部状态栏 -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span class="signal">📶</span>
+                <span>IERG6200</span>
+            </div>
+            <div class="battery">
+                <div class="battery-icon">
+                    <div class="battery-level" id="battery-level"></div>
+                </div>
+                <span id="battery-text">78%</span>
+            </div>
+        </div>
+
+        <!-- 时间 & 日期 -->
+        <div class="time-block">
+            <div class="time-display" id="time-display">10:09</div>
+            <div class="date-display" id="date-display">周三, 11月 26日</div>
+        </div>
+
+        <!-- 风险标签 & route -->
+        <div class="risk-row">
+            <div class="risk-chip" id="risk-chip">--</div>
+            <div class="route-tag" id="route-tag">route: --</div>
+        </div>
+
+        <!-- 心率 / 步数 / 睡眠 -->
+        <div class="metrics-row">
+            <div class="metric-card metric-hr">
+                <div class="metric-header">
+                    <span class="metric-icon">❤️</span>
+                    <span class="metric-label">心率</span>
+                </div>
+                <div class="metric-value" id="hr-value">--</div>
+                <div class="metric-sub">BPM</div>
+            </div>
+
+            <div class="metric-card metric-steps">
+                <div class="metric-header">
+                    <span class="metric-icon">👣</span>
+                    <span class="metric-label">步数</span>
+                </div>
+                <div class="metric-value" id="steps-value">--</div>
+                <div class="metric-sub">今日</div>
+            </div>
+
+            <div class="metric-card metric-sleep">
+                <div class="metric-header">
+                    <span class="metric-icon">😴</span>
+                    <span class="metric-label">睡眠</span>
+                </div>
+                <div class="metric-value" id="sleep-value">--</div>
+                <div class="metric-sub">小时</div>
+            </div>
+        </div>
+
+        <!-- 天气 -->
+        <div class="weather-card">
+            <div class="weather-main">
+                <span class="weather-icon" id="weather-icon">☀️</span>
+                <div>
+                    <div class="weather-temp" id="weather-temp">--°</div>
+                    <div class="weather-sub" id="weather-sub">--</div>
+                </div>
+            </div>
+            <div class="weather-warning" id="weather-warning"></div>
+        </div>
+
+        <!-- RAG/macros 文本消息 -->
+        <div class="message-card" id="message-card">
+            等待后端数据……
+        </div>
+
+        <!-- 提醒列表 -->
+        <div class="reminders-card">
+            <div class="reminders-header">
+                <span class="reminders-title">提醒</span>
+                <span class="reminders-count" id="reminders-count">0 项</span>
+            </div>
+            <div id="reminders-list">
+                <div class="reminders-empty">暂无数据</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ======== DOM 元素引用 ========
+    const riskChipEl = document.getElementById("risk-chip");
+    const routeTagEl = document.getElementById("route-tag");
+    const hrValueEl = document.getElementById("hr-value");
+    const stepsValueEl = document.getElementById("steps-value");
+    const sleepValueEl = document.getElementById("sleep-value");
+    const weatherIconEl = document.getElementById("weather-icon");
+    const weatherTempEl = document.getElementById("weather-temp");
+    const weatherSubEl = document.getElementById("weather-sub");
+    const weatherWarningEl = document.getElementById("weather-warning");
+    const messageCardEl = document.getElementById("message-card");
+    const remindersListEl = document.getElementById("reminders-list");
+    const remindersCountEl = document.getElementById("reminders-count");
+    const timeDisplayEl = document.getElementById("time-display");
+    const dateDisplayEl = document.getElementById("date-display");
+    const batteryLevelEl = document.getElementById("battery-level");
+    const batteryTextEl = document.getElementById("battery-text");
+
+    // ======== 时间 & 电量模拟 ========
+    function updateTime() {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, "0");
+        const mm = String(now.getMinutes()).padStart(2, "0");
+        timeDisplayEl.textContent = `${hh}:${mm}`;
+
+        const weekdayMap = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+        const monthMap = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+        const weekday = weekdayMap[now.getDay()];
+        const month = monthMap[now.getMonth()];
+        const date = now.getDate();
+        dateDisplayEl.textContent = `${weekday}, ${month} ${date}日`;
+    }
+
+    function updateBattery() {
+        const base = 80;
+        const jitter = Math.floor(Math.random() * 8) - 4;
+        const level = Math.max(60, Math.min(95, base + jitter));
+        batteryTextEl.textContent = `${level}%`;
+        batteryLevelEl.style.width = `${Math.max(10, level)}%`;
+    }
+
+    // ======== 风险标签渲染 ========
+    function renderRiskChip(riskLevel) {
+        riskChipEl.classList.remove("risk-high", "risk-medium", "risk-low");
+        let text = "--";
+        if (riskLevel === "high") {
+            riskChipEl.classList.add("risk-high");
+            text = "高风险 / High";
+        } else if (riskLevel === "medium") {
+            riskChipEl.classList.add("risk-medium");
+            text = "中风险 / Medium";
+        } else if (riskLevel === "low") {
+            riskChipEl.classList.add("risk-low");
+            text = "低风险 / Low";
+        }
+        riskChipEl.textContent = text;
+    }
+
+    // ======== 天气渲染 ========
+    function renderWeather(weather) {
+        if (!weather) {
+            weatherTempEl.textContent = "--°";
+            weatherSubEl.textContent = "无天气数据";
+            weatherIconEl.textContent = "☁️";
+            weatherWarningEl.textContent = "";
+            return;
+        }
+
+        const temp = weather.temperature;
+        weatherTempEl.textContent = (temp !== undefined && temp !== null) ? `${temp}°` : "--°";
+
+        const warnings = weather.warnings || [];
+        if (warnings.includes("WHOT")) {
+            weatherIconEl.textContent = "🥵";
+            weatherSubEl.textContent = "高温预警";
+            weatherWarningEl.textContent = "WHOT：高温健康风险，注意补水、避免暴晒。";
+        } else {
+            weatherIconEl.textContent = "☀️";
+            weatherSubEl.textContent = "天气良好";
+            weatherWarningEl.textContent = "";
+        }
+    }
+
+    // ======== vitals 渲染 ========
+    function renderVitals(vitals) {
+        if (!vitals) vitals = {};
+        const hr = vitals.heart_rate;
+        const steps = vitals.steps;
+        const sleep = vitals.sleep;
+
+        hrValueEl.textContent = (hr !== undefined && hr !== null) ? hr : "--";
+        stepsValueEl.textContent = (steps !== undefined && steps !== null) ? steps : "--";
+        sleepValueEl.textContent = (sleep !== undefined && sleep !== null) ? Number(sleep).toFixed(1) : "--";
+    }
+
+    // ======== 提醒渲染 ========
+    function renderReminders(reminders) {
+        remindersListEl.innerHTML = "";
+
+        if (!reminders || reminders.length === 0) {
+            remindersCountEl.textContent = "0 项";
+            const empty = document.createElement("div");
+            empty.className = "reminders-empty";
+            empty.textContent = "暂无提醒";
+            remindersListEl.appendChild(empty);
+            return;
+        }
+
+        remindersCountEl.textContent = `${reminders.length} 项`;
+
+        reminders.forEach(r => {
+            const item = document.createElement("div");
+            item.className = "reminder-item";
+
+            const icon = document.createElement("span");
+            icon.className = "reminder-icon";
+            icon.textContent = "⏰";
+
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "reminder-content";
+
+            const textDiv = document.createElement("div");
+            textDiv.className = "reminder-text";
+            textDiv.textContent = r.content || "";
+
+            const metaDiv = document.createElement("div");
+            metaDiv.className = "reminder-meta";
+
+            const sevSpan = document.createElement("span");
+            if (r.severity === "high") {
+                sevSpan.className = "severity-high";
+                sevSpan.textContent = "高优先级";
+            } else if (r.severity === "medium") {
+                sevSpan.className = "severity-medium";
+                sevSpan.textContent = "中等优先级";
+            } else if (r.severity === "low") {
+                sevSpan.className = "severity-low";
+                sevSpan.textContent = "低优先级";
+            } else {
+                sevSpan.textContent = "优先级未知";
+            }
+
+            const timeSpan = document.createElement("span");
+            timeSpan.textContent = ` · 截止 ${formatDueTime(r.due_time)}`;
+
+            metaDiv.appendChild(sevSpan);
+            metaDiv.appendChild(timeSpan);
+
+            contentDiv.appendChild(textDiv);
+            contentDiv.appendChild(metaDiv);
+
+            item.appendChild(icon);
+            item.appendChild(contentDiv);
+
+            remindersListEl.appendChild(item);
+        });
+    }
+
+    function formatDueTime(dueTimeStr) {
+        if (!dueTimeStr) return "--";
+        const t = dueTimeStr.split("T")[1] || "";
+        const hm = t.slice(0, 5);
+        return hm || "--:--";
+    }
+
+    // ======== 核心：从后端 payload 更新 UI 的入口 ========
+    function updateWatchUI(enginePayload) {
+        if (!enginePayload) return;
+
+        const state = enginePayload.state || {};
+        const output = enginePayload.output || {};
+
+        // risk level + route
+        renderRiskChip(output.risk_level);
+        routeTagEl.textContent = `route: ${output.route || "--"}`;
+
+        // vitals
+        renderVitals(state.vitals);
+
+        // weather（优先用 output.weather，没有就用 state.weather）
+        renderWeather(output.weather || state.weather);
+
+        // message
+        messageCardEl.textContent = output.message || "暂无提示信息";
+
+        // reminders
+        renderReminders(output.reminders);
+    }
+
+    // ======== 轮询后端 REST API ========
+    function startPolling(userId, intervalMs = 10000) {
+        async function fetchAndUpdate() {
+            try {
+                // 注意：这里直接写 http://localhost:8000
+                const url = `http://localhost:8000/api/watch_state?user_id=${encodeURIComponent(userId)}&scenario=medium`;
+                const res = await fetch(url);
+                if (!res.ok) {
+                    console.error("Fetch failed:", res.status);
+                    return;
+                }
+                const payload = await res.json();
+                updateWatchUI(payload);
+            } catch (err) {
+                console.error("Fetch error:", err);
+            }
+        }
+
+        fetchAndUpdate(); // 立即拉一次
+        return setInterval(fetchAndUpdate, intervalMs);
+    }
+
+    // ======== 初始化 ========
+    document.addEventListener("DOMContentLoaded", () => {
+        updateTime();
+        updateBattery();
+
+        setInterval(updateTime, 1000 * 30);
+        setInterval(updateBattery, 1000 * 20);
+
+        const userId = "user_001";
+
+        // 每 10 秒从后端拉一次数据
+        startPolling(userId, 10000);
+
+        // 暴露给控制台调试：你可以在浏览器 console 里手动调用 updateWatchUI(...)
+        window.updateWatchUI = updateWatchUI;
+    });
+</script>
+
+</body>
+</html>
